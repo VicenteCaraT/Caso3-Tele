@@ -42,6 +42,7 @@ Longhorn (almacenamiento persistente)
 | Service Metabase | `k8s/metabase-service.yaml` |
 | Setup automático Metabase (script) | `k8s/metabase-setup-configmap.yaml` |
 | Setup automático Metabase (Job) | `k8s/metabase-setup-job.yaml` |
+| Setup contenido Metabase (cards/dashboards) | `scripts/metabase-setup.sh` |
 | Ingress | `k8s/metabase-ingress.yaml` |
 
 Namespace de trabajo: `vicenct-dev`
@@ -97,11 +98,20 @@ gunzip -c ~/google-mobility.sql.gz | kubectl exec -i mysql-0 -n vicenct-dev -- \
 
 ### 5. Dashboard (creado vía API)
 
+`scripts/metabase-setup.sh` archiva todo el contenido de muestra y deja:
+
 | Pregunta | Tipo | Consulta |
 |---|---|---|
-| Movilidad Mendoza Capital - 2020 (líneas) | Líneas | avg de grocery/parks/workplaces/retail por mes, Mendoza + Capital Department, 2020 |
-| Parques por departamento de Mendoza | Barras | avg de parks por `sub_region_2` (19 departamentos) |
-| Retail por semana - Mendoza | Líneas | avg de retail por semana |
+| Google Mobility | Tabla | Dataset `mobility` filtrado a `country_region = Argentina` |
+| Google Mobility - Evolución | Líneas | avg de retail/grocery/parks/workplaces por fecha (Argentina) |
+
+| Dashboard | Contenido |
+|---|---|
+| Google Mobility - Dashboard | Card tabla (12x8) |
+| Google Mobility - Dashboard Filtros | Card tabla (24x10) + gráfico (24x8), con filtros **Región 1** (sub_region_1), **Región 2** (sub_region_2) y **Fecha** (date/range) conectados a ambas cards |
+
+Uso: `./scripts/metabase-setup.sh https://<host> mysql-service <db_pass> <admin_email> <admin_pass>`
+(la conexión MySQL `Google Mobility` se crea/reusa, idempotente)
 
 ### 6. Ingress
 
@@ -131,5 +141,5 @@ Borrado del pod `mysql-0` → recreado por el StatefulSet (UID distinto) → **4
 ## Notas y decisiones
 
 - El Secret `k8s/secret.yaml` con contraseñas reales está en `.gitignore` (no se versiona)
-- La Sample Database de Metabase se eliminó (`DELETE /api/database/1`)
+- El setup de contenido (cards, dashboards, archivado de lo demás) se hace con `scripts/metabase-setup.sh`
 - Los restarts iniciales de Metabase fueron por probes demasiado estrictas durante el primer arranque y una migración interrumpida; se resolvió con tolerancia de probes amplia + recreación del schema `metabase_db`
