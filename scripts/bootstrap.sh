@@ -37,9 +37,18 @@ secret_get() { # secret_get <key> -> valor decodificado
 }
 
 if [ "${1:-}" = "--destroy" ]; then
-  echo "==> Destruyendo namespace ${NS} (pods, PVCs, ingress... todo)"
-  kubectl delete namespace "$NS" --ignore-not-found
-  echo "==> Destroy completo. Para reconstruir: ./bootstrap.sh"
+  echo "==> Eliminando recursos de ${NS} (pods, PVCs, services, ingress, jobs...)"
+  echo "    ATENCION: el namespace ${NS} NO se borra."
+  kubectl delete -f "${K8S_DIR}/mysql-statefulset.yaml" \
+                 -f "${K8S_DIR}/mysql-service.yaml" \
+                 -f "${K8S_DIR}/mysql-pvc.yaml" \
+                 -f "${K8S_DIR}/metabase-deployment.yaml" \
+                 -f "${K8S_DIR}/metabase-service.yaml" \
+                 -f "${K8S_DIR}/metabase-ingress.yaml" \
+                 -f "${K8S_DIR}/metabase-setup-configmap.yaml" \
+                 -f "${K8S_DIR}/metabase-setup-job.yaml" \
+                 --ignore-not-found
+  echo "==> Destroy completo (namespace intacto). Para reconstruir: ./bootstrap.sh"
   exit 0
 fi
 
