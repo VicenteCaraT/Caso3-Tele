@@ -1,0 +1,21 @@
+# Kubernetes
+kubeconfig
+*.kubeconfig
+kube-config*
+.config/
+
+# Secrets y credenciales
+k8s/secret.yaml
+*.token
+*.pem
+*.key
+*id_rsa*
+*token*
+
+# Datos sensibles
+.env
+*.env
+
+# Sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metabase
+  namespace: vicenct-dev
+  labels:
+    app: metabase
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metabase
+  template:
+    metadata:
+      labels:
+        app: metabase
+    spec:
+      containers:
+        - name: metabase
+          image: metabase/metabase:v0.62.13
+          env:
+            - name: MB_DB_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_DB_TYPE
+            - name: MB_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_DB_HOST
+            - name: MB_DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_DB_PORT
+            - name: MB_DB_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_DB_DBNAME
+            - name: MB_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_DB_USER
+            - name: MB_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_DB_PASS
+            - name: MB_ADD_SAMPLE_DATASET
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MB_ADD_SAMPLE_DATASET
+          ports:
+            - containerPort: 3000
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 18
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 600
+            periodSeconds: 30
+            failureThreshold: 4
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 500m
+            limits:
+              memory: 2Gi
+              cpu: "1"

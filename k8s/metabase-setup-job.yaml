@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: metabase-setup-job
+  namespace: vicenct-dev
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      name: metabase-setup-job
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup-container
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - "apk add --no-cache curl jq >/dev/null 2>&1 && sh /scripts/setup.sh"
+          envFrom:
+            - secretRef:
+                name: mysql-secret
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+      volumes:
+        - name: script-volume
+          configMap:
+            name: metabase-setup-script

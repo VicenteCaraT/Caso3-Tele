@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metabase-setup-script
+  namespace: vicenct-dev
+data:
+  setup.sh: |
+    #!/bin/sh
+    echo "Esperando a que Metabase termine su inicializacion interna..."
+    while ! curl -s http://metabase-service:3000/api/health | grep -q '"status":"ok"'; do
+      echo "Metabase no esta listo aun. Reintentando en 5 segundos..."
+      sleep 5
+    done
+    echo "Metabase esta listo."
+
+    SETUP_TOKEN=$(curl -s http://metabase-service:3000/api/session/properties | jq -r '.["setup-token"]')
+
+    if [ "$SETUP_TOKEN" = "null" ] || [ -z "$SETUP_TOKEN" ]; then
+      echo "El token de setup es nulo. Metabase ya fue configurado."
+      exit 0
+    fi
+
+    echo "Conectando base gam y creando usuario administrador..."
+    curl -s -X POST http://metabase-service:3000/api/setup \
+      -H "Content-Type: application/json" \
+      -d "{\"token\":\"${SETUP_TOKEN}\",\"user\":{\"first_name\":\"${MB_ADMIN_FIRST_NAME}\",\"last_name\":\"${MB_ADMIN_LAST_NAME}\",\"email\":\"${MB_ADMIN_EMAIL}\",\"password\":\"${MB_ADMIN_PASSWORD}\"},\"prefs\":{\"site_name\":\"${MB_SITE_NAME}\",\"allow_tracking\":false},\"database\":{\"engine\":\"mysql\",\"name\":\"Google Mobility\",\"details\":{\"host\":\"mysql-service\",\"port\":3306,\"dbname\":\"gam\",\"user\":\"metabase\",\"password\":\"${MYSQL_PASSWORD}\"}}}"
+    echo
+    echo "Configuracion automatica completada."
