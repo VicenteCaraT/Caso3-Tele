@@ -43,6 +43,7 @@ Longhorn (almacenamiento persistente)
 | Setup automático Metabase (script) | `k8s/metabase-setup-configmap.yaml` |
 | Setup automático Metabase (Job) | `k8s/metabase-setup-job.yaml` |
 | Setup contenido Metabase (cards/dashboards) | `scripts/metabase-setup.sh` |
+| Despliegue completo (bootstrap) | `scripts/bootstrap.sh` |
 | Ingress | `k8s/metabase-ingress.yaml` |
 
 Namespace de trabajo: `vicenct-dev`
@@ -52,6 +53,27 @@ Namespace de trabajo: `vicenct-dev`
 - **URL:** `https://vicenct-metabase.my.kube.um.edu.ar`
 - **Usuario admin:** `admin@proyecto.com`
 - **Contraseña admin:** generada automáticamente (ver Secret `mysql-secret`, clave `MB_ADMIN_PASSWORD`)
+
+## Despliegue completo (1 comando)
+
+`scripts/bootstrap.sh` orquesta TODO el despliegue de forma **idempotente** (se puede re-ejecutar sin romper nada):
+
+```bash
+./scripts/bootstrap.sh            # construir/verificar todo
+./scripts/bootstrap.sh --destroy  # eliminar el namespace completo
+```
+
+Pasos que ejecuta:
+
+1. Aplica Secret + PVC + Service + StatefulSet MySQL
+2. Espera MySQL Ready
+3. Crea `metabase_db` + user `app_user` (solo si faltan)
+4. Importa el dataset (solo si `gam.mobility` está vacía)
+5. Aplica Deployment + Service + Ingress de Metabase y espera el rollout
+6. Corre el Job de setup (admin de Metabase, idempotente)
+7. Corre el script de contenido (cards, dashboards, archivado)
+
+Requisitos: `kubectl` con kubeconfig del lab, `k8s/secret.yaml` presente, dump en `data/google-mobility.sql.gz` (o `$HOME`), acceso de red al `FE_URL`. Variables opcionales: `NS`, `FE_URL`, `DATA_FILE`, `K8S_DIR`.
 
 ## Pasos del despliegue
 
