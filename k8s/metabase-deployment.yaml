@@ -15,6 +15,8 @@ spec:
       labels:
         app: metabase
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: cluster-01-workers-4phg9-6w74j
       containers:
         - name: metabase
           image: metabase/metabase:v0.62.13
@@ -57,24 +59,30 @@ spec:
           ports:
             - containerPort: 3000
               name: http
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            failureThreshold: 40
+            periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /api/health
               port: 3000
-            initialDelaySeconds: 60
+            initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 18
           livenessProbe:
             httpGet:
               path: /api/health
               port: 3000
-            initialDelaySeconds: 600
+            initialDelaySeconds: 10
             periodSeconds: 30
             failureThreshold: 4
           resources:
             requests:
-              memory: 512Mi
+              memory: 1Gi
               cpu: 500m
             limits:
-              memory: 2Gi
-              cpu: "1"
+              memory: 4Gi
+              cpu: "2"
